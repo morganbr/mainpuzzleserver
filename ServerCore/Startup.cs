@@ -8,6 +8,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using ServerCore.Models;
+using ServerCore.DataModel;
+using ServerCore.Areas.Identity.Data;
+using Microsoft.AspNetCore.Identity;
 
 namespace ServerCore
 {
@@ -28,6 +31,16 @@ namespace ServerCore
             services.AddDbContext<PuzzleServerContext>
                 (options => options.UseLazyLoadingProxies()
                     .UseSqlServer(Configuration.GetConnectionString("PuzzleServerContext")));
+
+            //services.AddIdentity<GarbageUser, IdentityRole>()
+            //    .AddEntityFrameworkStores<GarbageContext>()
+            //    .AddDefaultTokenProviders();
+
+            services.AddAuthentication().AddMicrosoftAccount(microsoftOptions =>
+            {
+                microsoftOptions.ClientId = Configuration["Authentication:Microsoft:ApplicationId"];
+                microsoftOptions.ClientSecret = Configuration["Authentication:Microsoft:Password"];
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -42,9 +55,13 @@ namespace ServerCore
             else
             {
                 app.UseExceptionHandler("/Error");
+                app.UseHsts();
             }
 
+            app.UseHttpsRedirection();
+
             app.UseStaticFiles();
+            app.UseAuthentication();
 
             app.UseMvc();
         }
