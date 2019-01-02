@@ -36,6 +36,7 @@
     <Folder Include="Content\" />
     <Folder Include="Pages\Manage\" />
     <Folder Include="Pages\Play\" />
+    <Folder Include="Pages\UnlockWaves\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Data\Data.csproj" />

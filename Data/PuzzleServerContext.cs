@@ -32,6 +32,8 @@ namespace ServerCore.DataModel
         public DbSet<PuzzleUser> PuzzleUsers { get; set; }
         public DbSet<Hint> Hints { get; set; }
         public DbSet<HintStatePerTeam> HintStatePerTeam { get; set; }
+        public DbSet<UnlockWave> UnlockWaves { get; set; }
+        public DbSet<UnlockWave> UnlockWavesPerTeam { get; set; }
 
         public static void UpdateDatabase(IApplicationBuilder app)
         {
@@ -56,6 +58,7 @@ namespace ServerCore.DataModel
             modelBuilder.Entity<ContentFile>().HasIndex(contentFile => new { contentFile.EventID, contentFile.ShortName }).IsUnique();
             modelBuilder.Entity<PuzzleStatePerTeam>().HasKey(state => new { state.PuzzleID, state.TeamID });
             modelBuilder.Entity<HintStatePerTeam>().HasKey(state => new { state.TeamID, state.HintID });
+            modelBuilder.Entity<UnlockWavePerTeam>().HasKey(state => new { state.WaveID, state.TeamID });
 
             base.OnModelCreating(modelBuilder);
         }

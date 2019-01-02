@@ -115,6 +115,12 @@ namespace ServerCore.DataModel
         public virtual ICollection<Hint> Hints { get; set; }
 
         /// <summary>
+        /// The optional unlock wave that will open this puzzle
+        /// </summary>
+        [ForeignKey("UnlockWaveID")]
+        public virtual UnlockWave UnlockWave { get; set; }
+
+        /// <summary>
         /// File for the main puzzle (typically a PDF containing the puzzle)
         /// </summary>
         [NotMapped]
