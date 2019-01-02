@@ -36,6 +36,9 @@ namespace ServerCore.DataModel
         [Required]
         public string Name { get; set; }
 
+        [Required]
+        public virtual Event Event { get; set; }
+
         /// <summary>
         /// A previous wave that this should unlock a certain amount of time after. May be null.
         /// </summary>

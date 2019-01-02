@@ -20,12 +20,19 @@ namespace Data.Migrations
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Name = table.Column<string>(nullable: false),
+                    EventID = table.Column<int>(nullable: false),
                     PreviousWaveId = table.Column<int>(nullable: true),
                     TimeAfterPreviousWave = table.Column<TimeSpan>(nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_UnlockWave", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UnlockWave_Events_EventID",
+                        column: x => x.EventID,
+                        principalTable: "Events",
+                        principalColumn: "ID",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_UnlockWave_UnlockWave_PreviousWaveId",
                         column: x => x.PreviousWaveId,
@@ -63,6 +70,11 @@ namespace Data.Migrations
                 name: "IX_Puzzles_UnlockWaveID",
                 table: "Puzzles",
                 column: "UnlockWaveID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UnlockWave_EventID",
+                table: "UnlockWave",
+                column: "EventID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UnlockWave_PreviousWaveId",

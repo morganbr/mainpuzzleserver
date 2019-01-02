@@ -657,6 +657,8 @@ namespace Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<int>("EventID");
+
                     b.Property<string>("Name")
                         .IsRequired();
 
@@ -665,6 +667,8 @@ namespace Data.Migrations
                     b.Property<TimeSpan?>("TimeAfterPreviousWave");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EventID");
 
                     b.HasIndex("PreviousWaveId");
 
@@ -913,6 +917,11 @@ namespace Data.Migrations
 
             modelBuilder.Entity("ServerCore.DataModel.UnlockWave", b =>
                 {
+                    b.HasOne("ServerCore.DataModel.Event", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventID")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("ServerCore.DataModel.UnlockWave", "PreviousWave")
                         .WithMany()
                         .HasForeignKey("PreviousWaveId");

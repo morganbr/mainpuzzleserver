@@ -1,0 +1,49 @@
+﻿@page "/{eventId}/{eventRole}/UnlockWaves"
+@model ServerCore.Pages.UnlockWaves.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h2>Unlock Waves</h2>
+
+<p>
+    <a asp-page="Create">Create Unlock Wave</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.UnlockWaves[0].Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UnlockWaves[0].TimeAfterPreviousWave)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.UnlockWaves) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TimeAfterPreviousWave)
+            </td>
+            <td>
+                @if (Model.EventRole == ServerCore.ModelBases.EventRole.admin)
+                {
+                    @:<a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
+                }
+                <a asp-page="./Details" asp-route-id="@item.Id">Details</a> 
+                @if (Model.EventRole == ServerCore.ModelBases.EventRole.admin)
+                { 
+                @: |
+                <a asp-page="./Delete" ifp-route-id="@item.Id">Delete</a>
+                }
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

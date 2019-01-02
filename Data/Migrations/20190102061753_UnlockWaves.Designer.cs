@@ -10,7 +10,7 @@ using ServerCore.DataModel;
 namespace Data.Migrations
 {
     [DbContext(typeof(PuzzleServerContext))]
-    [Migration("20190102060635_UnlockWaves")]
+    [Migration("20190102061753_UnlockWaves")]
     partial class UnlockWaves
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -659,6 +659,8 @@ namespace Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<int>("EventID");
+
                     b.Property<string>("Name")
                         .IsRequired();
 
@@ -667,6 +669,8 @@ namespace Data.Migrations
                     b.Property<TimeSpan?>("TimeAfterPreviousWave");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EventID");
 
                     b.HasIndex("PreviousWaveId");
 
@@ -915,6 +919,11 @@ namespace Data.Migrations
 
             modelBuilder.Entity("ServerCore.DataModel.UnlockWave", b =>
                 {
+                    b.HasOne("ServerCore.DataModel.Event", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventID")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("ServerCore.DataModel.UnlockWave", "PreviousWave")
                         .WithMany()
                         .HasForeignKey("PreviousWaveId");
