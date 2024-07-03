@@ -1,0 +1,97 @@
+﻿@using ServerCore.Helpers
+@using ServerCore.Pages.Components
+
+@if (Loaded)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @(Event.TermForGroup ?? "Group")
+                    @*                 <a asp-page="./Play"
+                asp-route-teamId="@Model.Team.ID"
+                asp-route-singlePlayerPuzzleSort="@Model.SinglePlayerPuzzleSort"
+                asp-route-teamPuzzleSort="@(Model.SortForColumnLink(Model.TeamPuzzleSort, PlayModel.SortOrder.GroupAscending, PlayModel.SortOrder.GroupDescending))"
+                asp-route-stateFilter="@Model.StateFilter">
+                @(Model.Event.TermForGroup ?? "Group")
+                </a> *@
+                </th>
+                <th>
+                    @*                 <a asp-page="./Play"
+                asp-route-singlePlayerPuzzleSort="@Model.SinglePlayerPuzzleSort"
+                asp-route-teamPuzzleSort="@(Model.SortForColumnLink(Model.TeamPuzzleSort, PlayModel.SortOrder.PuzzleAscending, PlayModel.SortOrder.PuzzleDescending))"
+                asp-route-stateFilter="@Model.StateFilter">
+                Puzzle
+                </a> *@
+                    Puzzle
+                </th>
+                <th>
+                    Who's Here
+                </th>
+                @if (Event.AreAnswersAvailableNow)
+                {
+                    <th>
+                        Answer
+                    </th>
+                }
+                @if (Event.AllowFeedback)
+                {
+                    <th>
+                        Feedback
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in VisibleTeamPuzzleViews)
+            {
+                <tr id="@item.Name.Replace(" ", "")">
+                    <td class="puzzle-list-group-customizable">
+                        @RawHtmlHelper.GetMarkupString(item.Group, EventId)
+                    </td>
+                    <td class="puzzle-list-title-customizable">
+                        @if (!string.IsNullOrWhiteSpace(item.Errata))
+                        {
+                            <span class="errata-symbol-customizable" title="This puzzle has errata">&#x26A0; </span>
+                        }
+                        @if (item.SolvedTime != null)
+                        {
+                            <span class="solved-symbol-customizable" title="This puzzle has been solved">&#10004; </span>
+                        }
+
+                        <a href="@item.ViewUrl">
+                            @RawHtmlHelper.GetMarkupString(item.Name, EventId)
+                        </a>
+
+                        @* TODO morganb: PieceMetaUsage/SimpleMeta*@
+                    </td>
+                    <td>
+                        <PresenceComponent IsReadOnly="true" PuzzleId="@item.ID" MaxUsers="3" ShowPresenceOnly="true" PuzzleUserId="@PuzzleUserId" TeamId="@TeamId" />
+                    </td>
+                    @if (Event.AreAnswersAvailableNow)
+                    {
+                        <td class="puzzle-list-answer-customizable">
+                            @* TODO morganb *@
+                            Answer Placeholder
+                        </td>
+                    }
+                    @if (Event.AllowFeedback)
+                    {
+                        <td class="puzzle-list-feedback-customizable">
+                            @* TODO morganb *@
+                            Feedback Placeholder
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+@code {
+
+}

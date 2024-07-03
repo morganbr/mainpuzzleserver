@@ -73,6 +73,10 @@ else if (!Model.VisibleTeamPuzzleViews.Any())
         <p>Looks like there are no Team puzzles available here yet!</p>
     }
 }
+else if (Model.Event.AllowBlazor && Model.Event.EmbedPuzzles)
+{
+    <component type="typeof(ServerCore.Pages.Puzzles.PuzzleList)" render-mode="Server" param-EventId="@Model.Event.ID" param-PuzzleUserId="@Model.LoggedInUser.ID" param-TeamId="@Model.Team.ID" param-EventRole="@Model.EventRole" />
+}
 else
 {
     <table class="table">
@@ -99,12 +103,6 @@ else
                 {
                     <th>
                         Answer
-                    </th>
-                }
-                else if (Model.Event.AllowBlazor)
-                {
-                    <th>
-                        Who's here
                     </th>
                 }
                 <th>
@@ -182,12 +180,6 @@ else
                             {
                                 @Html.ActionLink("View answer", "Index", "Files", new { eventId = Model.Event.ID, filename = item.Answer.ShortName }, new { target = "_blank" })
                             }
-                        </td>
-                    }
-                    else if (Model.Event.AllowBlazor)
-                    {
-                        <td>
-                            <component type="typeof(ServerCore.Pages.Components.PresenceComponent)" render-mode="Server" param-PuzzleUserId="@Model.LoggedInUser.ID" param-TeamId="@Model.Team.ID" param-PuzzleId="@item.ID" param-IsReadOnly=true param-ShowPresenceOnly=true param-MaxUsers=2 />
                         </td>
                     }
                     <td class="puzzle-list-submit-customizable">
