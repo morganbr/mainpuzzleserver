@@ -47,7 +47,17 @@
             {
                 <tr id="@item.Name.Replace(" ", "")">
                     <td class="puzzle-list-group-customizable">
-                        @RawHtmlHelper.GetMarkupString(item.Group, EventId)
+                        @{
+                            MarkupString? markup = RawHtmlHelper.GetMarkupString(item.Group, EventId);
+                            if (markup != null)
+                            {
+                                @markup
+                            }
+                            else
+                            {
+                                @item.Group
+                            }
+                        }
                     </td>
                     <td class="puzzle-list-title-customizable">
                         @if (!string.IsNullOrWhiteSpace(item.Errata))
@@ -60,7 +70,17 @@
                         }
 
                         <a href="@item.ViewUrl">
-                            @RawHtmlHelper.GetMarkupString(item.Name, EventId)
+                            @{
+                                markup = RawHtmlHelper.GetMarkupString(item.Name, EventId);
+                                if (markup != null)
+                                {
+                                    @markup
+                                }
+                                else
+                                {
+                                    @item.Name
+                                }
+                            }
                         </a>
 
                         @* TODO morganb: PieceMetaUsage/SimpleMeta*@

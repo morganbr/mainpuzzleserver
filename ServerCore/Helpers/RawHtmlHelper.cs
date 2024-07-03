@@ -38,17 +38,15 @@ namespace ServerCore.Helpers
         /// <param name="text">text which might contain raw HTML in</param>
         /// <returns>MarkupString containing the raw html processed by Html.Raw or the entire string</returns>
 
-        public static object GetMarkupString(string text, int eventId)
+        public static MarkupString? GetMarkupString(string text, int eventId)
         {
             string asRawHtml = GetRawHtml(text, eventId);
             if (asRawHtml != null)
             {
                 return new MarkupString(asRawHtml);
             }
-            else
-            {
-                return text;
-            }
+
+            return null;
         }
 
         private static string? GetRawHtml(string text, int eventId) 
