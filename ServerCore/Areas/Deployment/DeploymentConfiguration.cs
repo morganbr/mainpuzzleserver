@@ -1,9 +1,11 @@
 ﻿using System;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using ServerCore.DataModel;
 
 namespace ServerCore.Areas.Deployment
@@ -30,7 +32,8 @@ namespace ServerCore.Areas.Deployment
             {
                 services.AddDbContextFactory<PuzzleServerContext>
                     (options => options.UseLazyLoadingProxies()
-                        .UseSqlServer(configuration.GetConnectionString("PuzzleServerContextLocal")));
+                        .UseSqlServer(configuration.GetConnectionString("PuzzleServerContextLocal"))
+                        .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
             }
         }
     }
