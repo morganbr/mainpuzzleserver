@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Http;
@@ -10,8 +12,147 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace PuzzleTimerTrigger
 {
+    public class PlayerInfo
+    {
+        public int InternalPlayerId { get; set; } // Unique ID for the player within the team
+        public int PuzzleUserId { get; set; }
+        public string PlayerName { get; set; }
+        public string PlayerClass { get; set; } // e.g., "captain", "engineer", etc.
+        public bool IsImposter { get; set; } // true if this player is the imposter
+    }
+
+    public class TeamInfo
+    {
+        public int TeamId { get; set; }
+        public string TeamName { get; set; }
+        public bool TeamIsRemote { get; set; }
+        public List<PlayerInfo> Players { get; set; }
+        public bool HasImpostor { get; set; }
+        public int NextNonSusId { get; set; } // Used to assign a unique ID to the next non-sus player
+    }
+
+
     public class TriggerAdminAnswerSubmission
     {
+        /*
+        "teamId": 5436,
+        "teamName": "Crash Test",
+        "teamIsRemote": false,
+        "puzzleUserId": 1,
+        "playerName": "Megan Quinn",
+        "playerClassUniqueName": "warrant"
+        */
+
+        public class RawPlayerInfo
+        {
+            public int teamId { get; set; }
+            public string teamName { get; set; }
+            public bool teamIsRemote { get; set; }
+            public int puzzleUserId { get; set; }
+            public string playerName { get; set; }
+            public string playerClassUniqueName { get; set; }
+        }
+
+        public bool CanBeImpostor(string playerName)
+        {
+            if (String.IsNullOrWhiteSpace(playerName))
+            {
+                return false;
+            }
+
+            if (!playerName.All(c => Char.IsAscii(c)))
+            {
+                return false; // Player name must be ASCII characters only
+            }
+
+            return true;
+        }
+
+        public List<TeamInfo> GetAllTeamInfo()
+        {
+            List<RawPlayerInfo> allPlayers = HttpClient.GetFromJsonAsync<List<RawPlayerInfo>>("http://puzzlehunt.azurewebsites.net/api/puzzleapi/state/eventteammembers/1062?eventPassword=26d91a28-8fd4-47d4-86c7-9777c59ae0a0").Result;
+
+            Dictionary<int, TeamInfo> teamMap = new Dictionary<int, TeamInfo>();
+
+            foreach (RawPlayerInfo rawPlayer in allPlayers)
+            {
+                if (!teamMap.ContainsKey(rawPlayer.teamId))
+                {
+                    teamMap[rawPlayer.teamId] = new TeamInfo
+                    {
+                        TeamId = rawPlayer.teamId,
+                        TeamName = rawPlayer.teamName,
+                        TeamIsRemote = rawPlayer.teamIsRemote,
+                        Players = new List<PlayerInfo>(),
+                        HasImpostor = false,
+                        NextNonSusId = 1 // Start with 1 for the first non-sus player
+                    };
+                }
+
+                bool canBeImpostor = CanBeImpostor(rawPlayer.playerName);
+
+                TeamInfo team = teamMap[rawPlayer.teamId];
+
+                bool isImposter = false;
+                int internalPlayerId;
+                if (!team.HasImpostor && canBeImpostor)
+                {
+                    // If this is the first player in the team and they can be an impostor, assign them as the impostor
+                    isImposter = true;
+                    internalPlayerId = 0;
+                }
+                else
+                {
+
+                    internalPlayerId = team.NextNonSusId;
+                    team.NextNonSusId++;
+                }
+
+                team.Players.Add(new PlayerInfo
+                {
+                    PuzzleUserId = rawPlayer.puzzleUserId,
+                    PlayerName = rawPlayer.playerName,
+                    PlayerClass = rawPlayer.playerClassUniqueName,
+                    IsImposter = isImposter, // First player in the list is the impostor
+                    InternalPlayerId = internalPlayerId // Assign a unique ID based on the order of players
+                });
+                team.HasImpostor |= team.Players.Last().IsImposter;
+            }
+
+            List<TeamInfo> teams = teamMap.Values.ToList();
+
+            foreach (TeamInfo team in teams)
+            {
+                if (!team.HasImpostor)
+                {
+                    //// If no impostor is assigned, assign the first player as the impostor
+                    //if (team.Players.Count > 0)
+                    //{
+                    //    team.Players[0].IsImposter = true;
+                    //    team.HasImpostor = true;
+                    //}
+                }
+            }
+
+            return new List<TeamInfo>(teamMap.Values);
+        }
+
+        public string GenerateDictionaryCodeForTeamList(List<TeamInfo> teams)
+        {
+            string code = "new Dictionary<int, TeamInfo>\n{\n";
+            foreach (TeamInfo team in teams)
+            {
+                code += $"    {{ {team.TeamId}, new TeamInfo {{ TeamId = {team.TeamId}, TeamName = \"{team.TeamName}\", TeamIsRemote = {team.TeamIsRemote.ToString().ToLower()}, Players = new List<PlayerInfo>\n    {{\n";
+                foreach (PlayerInfo player in team.Players)
+                {
+                    code += $"        new PlayerInfo {{ InternalPlayerId = {player.InternalPlayerId}, PuzzleUserId = {player.PuzzleUserId}, PlayerName = \"{player.PlayerName}\", PlayerClass = \"{player.PlayerClass}\", IsImposter = {player.IsImposter.ToString().ToLower()} }},\n";
+                }
+                code += "    }\n    }\n},\n";
+            }
+            code += "};\n";
+            return code;
+        }
+
         /// <summary>
         /// Stores the mapping of PuzzleId:SubmissionInfo where the PlayerId is 1-12 and TeamId is 0 (basically a dataset that can be used to generate the final player dataset later)
         /// </summary>
@@ -110,6 +251,11 @@ namespace PuzzleTimerTrigger
         [FunctionName("TriggerAdminAnswerSubmission")]
         public void Run([TimerTrigger("0 */1 * * * *")] TimerInfo myTimer, ILogger log)
         {
+            var allTeams = GetAllTeamInfo();
+            string code = GenerateDictionaryCodeForTeamList(allTeams);
+            File.WriteAllText(@"C:\Users\atrad\source\repos\mainpuzzleserver\PuzzleTimerTrigger\FullTeamInfo.cs", code);
+            return;
+
             //https://puzzlehunt.azurewebsites.net
             const string eventId = "pd24";
             var response = HttpClient.GetAsync($"http://localhost:44319/api/puzzleapi/state/puzzleunlockstate/{eventId}?minutes=30&timerWindow=20").Result.Content;
