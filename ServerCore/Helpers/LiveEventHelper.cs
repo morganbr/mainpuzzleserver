@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -88,9 +89,9 @@ namespace ServerCore.Helpers
         public static async Task EventOpeningReminder(PuzzleServerContext context, Event currentEvent, IHubContext<ServerMessageHub> hubContext)
         {
             var allEvents = await (from liveEvent in context.LiveEvents
-                                       join puzzle in context.Puzzles on liveEvent.AssociatedPuzzleId equals puzzle.ID
-                                       where puzzle.EventID == currentEvent.ID
-                                       select liveEvent).ToListAsync();
+                                   join puzzle in context.Puzzles on liveEvent.AssociatedPuzzleId equals puzzle.ID
+                                   where puzzle.EventID == currentEvent.ID
+                                   select liveEvent).ToListAsync();
 
             var eventsOpening = from liveEvent in allEvents
                                 where
@@ -120,7 +121,7 @@ namespace ServerCore.Helpers
                                    select liveEvent).ToListAsync();
 
             var eventsClosing = from liveEvent in allEvents
-                                where 
+                                where
                                 liveEvent.EventEndTimeUtc > DateTime.UtcNow &&
                                 liveEvent.EventEndTimeUtc - DateTime.UtcNow < liveEvent.ClosingReminderOffset &&
                                 DateTime.UtcNow - liveEvent.LastNotifiedAllTeamsUtc > liveEvent.ClosingReminderOffset
@@ -185,7 +186,7 @@ namespace ServerCore.Helpers
             // Randomize the team list order so that teams don't get an advantage for early registration or names
             Random seed = new();
 
-            // If the event isn't combining small teams, priotize larger times for the earlier time slots (but randomize within sizes)
+            // If the event isn't combining small teams, prioritize larger teams for the earlier time slots (but randomize within sizes)
             if (bigTeamsFirst)
             {
                 List<Team> sortedTeamList = new List<Team>();
@@ -214,7 +215,6 @@ namespace ServerCore.Helpers
                 var sortedTeamList = teamList.OrderBy(_ => seed.Next());
                 return sortedTeamList.ToList();
             }
-
         }
 
         /// <summary>
@@ -269,6 +269,75 @@ namespace ServerCore.Helpers
             }
 
             return await liveEvents.ToListAsync();
+        }
+
+        public static async Task<string> ExportLiveEventScheduleToCsv(PuzzleServerContext context, Event e)
+        {
+            string csvFormattedOuput = String.Empty;
+
+            // Get the set of scheduled times for the event
+            List<LiveEvent> scheduledEvents = await GetLiveEventsForEvent(context, e, true, false);
+
+            if(scheduledEvents.Count == 0)
+            {
+                return "";
+            }
+
+            scheduledEvents = scheduledEvents.OrderBy((liveEvent) => (liveEvent.ID)).ToList();
+            List<LiveEventSchedule> combinedSchedule = new List<LiveEventSchedule>();
+
+            StringBuilder byEventThenTime = new StringBuilder();
+
+            foreach (LiveEvent liveEvent in scheduledEvents)
+            {
+                List<LiveEventSchedule> scheduledTimes = await (from eventSlot in context.LiveEventsSchedule
+                                                               where eventSlot.LiveEventId == liveEvent.ID
+                                                               orderby eventSlot.StartTimeUtc
+                                                               select eventSlot).ToListAsync();
+
+                // Add to the checkin list
+                byEventThenTime.AppendLine(liveEvent.Name);
+
+                foreach (LiveEventSchedule slot in scheduledTimes)
+                {
+                    byEventThenTime.AppendLine($"{slot.Team.Name},{slot.StartTimeUtc.ToLocalTime().ToShortTimeString()}");
+                }
+
+                combinedSchedule.AddRange(scheduledTimes);
+            }
+
+            StringBuilder byTeam = new StringBuilder();
+            combinedSchedule = combinedSchedule.OrderBy((slot) => (slot.TeamId)).ThenBy((slot) => (slot.LiveEventId)).ToList();
+
+            // Set up the header line - the events are ordered by id above so the order is consistent here
+            byTeam.Append("Team Name");
+
+            foreach (LiveEvent liveEvent in scheduledEvents)
+            {
+                byTeam.Append(liveEvent.Name + ",");
+            }
+
+            int currentTeamId = -10;
+
+            foreach (LiveEventSchedule slot in combinedSchedule)
+            {
+                if (slot.TeamId != currentTeamId)
+                {
+                    // End the line for the current team
+                    byTeam.AppendLine();
+
+                    // Set the currentTeamId to the next team & put their team name at the start of the line
+                    currentTeamId = slot.TeamId;
+                    byTeam.Append(slot.Team.Name + ",");
+                }
+
+                // Add event start times ordered by event ID
+                byTeam.Append(slot.StartTimeUtc.ToLocalTime().ToShortTimeString() + ",");
+            }
+
+            csvFormattedOuput = byEventThenTime.ToString() + byTeam.ToString();
+
+            return csvFormattedOuput;
         }
     }
 }

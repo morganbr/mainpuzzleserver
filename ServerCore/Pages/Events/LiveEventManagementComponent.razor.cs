@@ -18,6 +18,8 @@ namespace ServerCore.Pages.Events
         [Inject]
         PuzzleServerContext PuzzleServerContext { get; set; }
 
+        string ScheduleCSV { get; set; }
+
         protected override async Task OnParametersSetAsync()
         {
             Event = await PuzzleServerContext.Events.FindAsync(EventId);
@@ -34,6 +36,11 @@ namespace ServerCore.Pages.Events
         {
             await LiveEventHelper.DeleteLiveEventSchedule(PuzzleServerContext, EventId);
             await LiveEventHelper.GenerateScheduleForLiveEvents(PuzzleServerContext, Event, bigTeamsFirst: false);
+        }
+
+        private async Task DisplayScheduleCSV(MouseEventArgs _)
+        {
+            ScheduleCSV = await LiveEventHelper.ExportLiveEventScheduleToCsv(PuzzleServerContext, Event);
         }
     }
 }

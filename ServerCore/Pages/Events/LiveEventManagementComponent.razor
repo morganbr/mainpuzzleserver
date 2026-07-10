@@ -2,3 +2,8 @@
 
 <button @onclick="RegenerateScheduleAsync">Delete and Regenerate Live Event Schedule (big teams first)</button>
 <button @onclick="RegenerateScheduleRandomlyAsync">Delete and Regenerate Live Event Schedule (order teams randomly)</button>
+<br />
+<br />
+<button @onclick="DisplayScheduleCSV">Display Schedule CSV</button>
+<br />
+<InputTextArea @bind-value="@ScheduleCSV" style="height:500px;width:400px"></InputTextArea>
