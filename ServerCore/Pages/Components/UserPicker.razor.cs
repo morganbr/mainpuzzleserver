@@ -25,6 +25,8 @@ namespace ServerCore.Pages.Components
 
         protected SemaphoreSlim _contextLock { get; set; } = new SemaphoreSlim(1, 1);
 
+        public string ErrorText = String.Empty;
+
         protected abstract Task<List<PuzzleUser>> GetAllUsersAsync();
 
         protected abstract Task OnUserAddedAsync(int addedUserId);
@@ -56,6 +58,7 @@ namespace ServerCore.Pages.Components
         }
         private async Task OnAddClick(int addedUserId)
         {
+            ErrorText = String.Empty;
             await OnUserAddedAsync(addedUserId);
             AllUsers = await GetAllUsersAsync();
             UpdateSelectedUsers();

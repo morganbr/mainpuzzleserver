@@ -66,7 +66,12 @@ namespace ServerCore.Pages.Teams
                 Event ev = await (from evt in _context.Events
                                   where evt.ID == EventId
                                   select evt).SingleAsync();
-                await TeamHelper.AddMemberAsync(_context, ev, EventRole.admin, TeamId, addedUserId);
+                var (success, error) = await TeamHelper.AddMemberAsync(_context, ev, EventRole.admin, TeamId, addedUserId);
+                if (!success)
+                {
+                    ErrorText = error;
+                    return;
+                }
             }
             finally
             {

@@ -5,6 +5,10 @@
     </form>
 </label>
 
+<div class="alert alert-danger" hidden="@(String.IsNullOrWhiteSpace(ErrorText))">
+    @ErrorText
+</div>
+
 <table class="table">
     <thead>
         <tr>
