@@ -382,7 +382,7 @@
 
                     @if (embedType == 3) // HTML files
                     {
-                        <div><span class="print-link btn quick-action" role="button"><span class="quick-action-icon">&#x1F5B6;&#xFE0F;</span> Print Puzzle</span></div>
+                        <div><a href="#" class="print-link btn quick-action" role="button"><span class="quick-action-icon">&#x1F5B6;&#xFE0F;</span> Print Puzzle</a></div>
                     }
                     else if (embedType == 4) // images
                     {
@@ -827,6 +827,8 @@
                 url = url.replace("&#x2B;", "+");
                 window.open(url, "_blank");
             }
+
+            event.preventDefault();
         }
     </script>
 }
