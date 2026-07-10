@@ -26,28 +26,53 @@ namespace ServerCore.Pages.Teams
 
         protected override async Task<List<PuzzleUser>> GetAllUsersAsync()
         {
-            return await (from user in _context.PuzzleUsers
-                          where !((from teamMember in _context.TeamMembers
-                                   where teamMember.Team.EventID == EventId
-                                   where teamMember.Member == user
-                                   select teamMember).Any())
-                          select user).ToListAsync();
+            await _contextLock.WaitAsync();
+            try
+            {
+                return await (from user in _context.PuzzleUsers
+                              where !((from teamMember in _context.TeamMembers
+                                       where teamMember.Team.EventID == EventId
+                                       where teamMember.Member == user
+                                       select teamMember).Any())
+                              select user).ToListAsync();
+            }
+            finally
+            {
+                _contextLock.Release();
+            }
         }
 
         private async Task UpdateCurrentMembersAsync()
         {
-            CurrentMembers = await (from member in _context.TeamMembers
-                                    where member.Team.ID == TeamId
-                                    select member.Member).ToListAsync();
+            await _contextLock.WaitAsync();
+            try
+            {
+                CurrentMembers = await (from teamMember in _context.TeamMembers
+                                        where teamMember.TeamID == TeamId
+                                        select teamMember.Member).ToListAsync();
+
+            }
+            finally
+            {
+                _contextLock.Release();
+            }
         }
 
         protected override async Task OnUserAddedAsync(int addedUserId)
         {
-            Event ev = await (from evt in _context.Events
-                              where evt.ID == EventId
-                              select evt).SingleAsync();
-            await TeamHelper.AddMemberAsync(_context, ev, EventRole.admin, TeamId, addedUserId);
-            await UpdateCurrentMembersAsync();
+            await _contextLock.WaitAsync();
+            try
+            {
+                Event ev = await (from evt in _context.Events
+                                  where evt.ID == EventId
+                                  select evt).SingleAsync();
+                await TeamHelper.AddMemberAsync(_context, ev, EventRole.admin, TeamId, addedUserId);
+                await UpdateCurrentMembersAsync();
+            }
+            finally
+            {
+                _contextLock.Release();
+            }
         }
     }
 }
