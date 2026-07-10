@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using ServerCore.DataModel;
@@ -16,8 +17,13 @@ namespace ServerCore.Pages.Components
         [Parameter]
         public int EventId { get; set; }
 
+        /// <summary>
+        /// Only access this while holding _contextLock
+        /// </summary>
         [Inject]
         public PuzzleServerContext _context { get; set; }
+
+        protected SemaphoreSlim _contextLock { get; set; } = new SemaphoreSlim(1, 1);
 
         protected abstract Task<List<PuzzleUser>> GetAllUsersAsync();
 
