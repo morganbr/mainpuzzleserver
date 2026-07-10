@@ -67,12 +67,13 @@ namespace ServerCore.Pages.Teams
                                   where evt.ID == EventId
                                   select evt).SingleAsync();
                 await TeamHelper.AddMemberAsync(_context, ev, EventRole.admin, TeamId, addedUserId);
-                await UpdateCurrentMembersAsync();
             }
             finally
             {
                 _contextLock.Release();
             }
+
+            await UpdateCurrentMembersAsync();
         }
     }
 }
